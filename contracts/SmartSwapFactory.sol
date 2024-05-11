@@ -1,23 +1,29 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.7.6;
 
-import './interfaces/IUniswapV3Factory.sol';
+import "./interfaces/ISmartSwapFactory.sol";
 
-import './UniswapV3PoolDeployer.sol';
-import './NoDelegateCall.sol';
+import "./SmartSwapPoolDeployer.sol";
+import "./NoDelegateCall.sol";
 
-import './UniswapV3Pool.sol';
+import "./SmartSwapPool.sol";
 
-/// @title Canonical Uniswap V3 factory
-/// @notice Deploys Uniswap V3 pools and manages ownership and control over pool protocol fees
-contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegateCall {
-    /// @inheritdoc IUniswapV3Factory
+/// @title Canonical SmartSwap  factory
+/// @notice Deploys SmartSwap  pools and manages ownership and control over pool protocol fees
+contract SmartSwapFactory is
+    ISmartSwapFactory,
+    SmartSwapPoolDeployer,
+    NoDelegateCall
+{
+    /// @inheritdoc ISmartSwapFactory
     address public override owner;
 
-    /// @inheritdoc IUniswapV3Factory
+    /// @inheritdoc ISmartSwapFactory
     mapping(uint24 => int24) public override feeAmountTickSpacing;
-    /// @inheritdoc IUniswapV3Factory
-    mapping(address => mapping(address => mapping(uint24 => address))) public override getPool;
+    /// @inheritdoc ISmartSwapFactory
+    mapping(address => mapping(address => mapping(uint24 => address)))
+        public
+        override getPool;
 
     constructor() {
         owner = msg.sender;
@@ -31,14 +37,16 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         emit FeeAmountEnabled(10000, 200);
     }
 
-    /// @inheritdoc IUniswapV3Factory
+    /// @inheritdoc ISmartSwapFactory
     function createPool(
         address tokenA,
         address tokenB,
         uint24 fee
     ) external override noDelegateCall returns (address pool) {
         require(tokenA != tokenB);
-        (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        (address token0, address token1) = tokenA < tokenB
+            ? (tokenA, tokenB)
+            : (tokenB, tokenA);
         require(token0 != address(0));
         int24 tickSpacing = feeAmountTickSpacing[fee];
         require(tickSpacing != 0);
@@ -50,14 +58,14 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         emit PoolCreated(token0, token1, fee, tickSpacing, pool);
     }
 
-    /// @inheritdoc IUniswapV3Factory
+    /// @inheritdoc ISmartSwapFactory
     function setOwner(address _owner) external override {
         require(msg.sender == owner);
         emit OwnerChanged(owner, _owner);
         owner = _owner;
     }
 
-    /// @inheritdoc IUniswapV3Factory
+    /// @inheritdoc ISmartSwapFactory
     function enableFeeAmount(uint24 fee, int24 tickSpacing) public override {
         require(msg.sender == owner);
         require(fee < 1000000);
